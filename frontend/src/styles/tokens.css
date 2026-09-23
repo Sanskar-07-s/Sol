@@ -1,0 +1,63 @@
+/* ==========================================================================
+   SOL DESIGN TOKENS
+   Aesthetic: Deep Cosmic Void, Controlled Optical Energy, High Spatial Clarity
+   ========================================================================== */
+
+:root {
+  /* Environment Space (Void & Cosmic Navy) */
+  --sol-bg-void: #02040a;
+  --sol-bg-deep: #050a17;
+  --sol-bg-subtle: #081226;
+  --sol-surface-elevated: rgba(10, 20, 42, 0.6);
+  --sol-surface-border: rgba(56, 189, 248, 0.12);
+  --sol-surface-border-subtle: rgba(255, 255, 255, 0.06);
+
+  /* Primary Computational Energy (Cyan & Electric Blue) */
+  --sol-energy-primary: #00d4ff;
+  --sol-energy-secondary: #0284c7;
+  --sol-energy-deep: #0369a1;
+  --sol-energy-muted: rgba(0, 212, 255, 0.15);
+  --sol-energy-faint: rgba(0, 212, 255, 0.05);
+
+  /* Core Singularity (White-hot / Pale Stellar Blue) */
+  --sol-core-singularity: #f0f9ff;
+  --sol-core-glow: rgba(240, 249, 255, 0.4);
+  --sol-core-halo: rgba(0, 212, 255, 0.2);
+
+  /* Semantic Feedback States */
+  --sol-state-idle: #38bdf8;
+  --sol-state-listening: #00f0ff;
+  --sol-state-thinking: #60a5fa;
+  --sol-state-executing: #0284c7;
+  --sol-state-speaking: #38bdf8;
+  --sol-state-success: #10b981;
+  --sol-state-warning: #f59e0b;
+  --sol-state-error: #ef4444;
+  --sol-state-offline: #475569;
+
+  /* Text & Foreground */
+  --sol-text-primary: #f8fafc;
+  --sol-text-secondary: #94a3b8;
+  --sol-text-muted: #475569;
+  --sol-text-energy: #38bdf8;
+
+  /* Typography Scales */
+  --sol-font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --sol-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* Controlled Lighting & Shadows */
+  --sol-glow-subtle: 0 0 20px rgba(0, 212, 255, 0.12);
+  --sol-glow-active: 0 0 35px rgba(0, 212, 255, 0.25);
+  --sol-glow-warning: 0 0 30px rgba(245, 158, 11, 0.2);
+  --sol-glow-error: 0 0 30px rgba(239, 68, 68, 0.2);
+
+  /* Layout & Spacing */
+  --sol-shell-max-width: 1440px;
+  --sol-header-height: 56px;
+  --sol-command-height: 64px;
+
+  /* Animation Timings */
+  --sol-transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --sol-transition-normal: 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  --sol-transition-smooth: 450ms cubic-bezier(0.16, 1, 0.3, 1);
+}

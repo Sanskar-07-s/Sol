@@ -1,0 +1,86 @@
+@import './tokens.css';
+@import './typography.css';
+
+/* ==========================================================================
+   SOL GLOBAL STYLES & RESET
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--sol-bg-void);
+  color: var(--sol-text-primary);
+  user-select: none;
+}
+
+/* Atmospheric Cosmic Background (Subtle celestial depth without distraction) */
+.sol-environment-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: 
+    radial-gradient(ellipse 70% 50% at 50% 45%, rgba(6, 18, 45, 0.4) 0%, rgba(2, 4, 10, 0.95) 75%, var(--sol-bg-void) 100%),
+    radial-gradient(circle 800px at 50% 50%, rgba(0, 180, 255, 0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Accessible Focus States */
+:focus-visible {
+  outline: 2px solid var(--sol-energy-primary);
+  outline-offset: 2px;
+}
+
+/* Button & Interactive Resets */
+button {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--sol-transition-fast);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+input {
+  background: none;
+  border: none;
+  color: inherit;
+  outline: none;
+}
+
+/* Custom Scrollbar for contextual logs */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.2);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.4);
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

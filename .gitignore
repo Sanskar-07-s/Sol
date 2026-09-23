@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Production build outputs
+dist/
+dist-ssr/
+build/
+*.local
+*.tsbuildinfo
+
+# Environment variables & secrets (CRITICAL - NEVER COMMIT)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+id_rsa
+id_ecdsa
+id_ed25519
+*.pfx
+*.p12
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor & OS files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Temporary files & caches
+.cache/
+.parcel-cache/
+.eslintcache
+tmp/
+temp/
+scratch/
+*.tmp
