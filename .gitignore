@@ -55,3 +55,8 @@ tmp/
 temp/
 scratch/
 *.tmp
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+

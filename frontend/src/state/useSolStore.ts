@@ -10,6 +10,7 @@ import {
   TelemetrySnapshot,
 } from './types';
 import { audioReactiveService } from '../core/audio/AudioReactiveService';
+import { commandRuntime } from '../runtime/CommandRuntime';
 
 /* ==========================================================================
    SOL STORE
@@ -34,19 +35,19 @@ const initialStateMachine = new SolStateMachine('IDLE');
 let storeState: SolStoreState = {
   solState: 'IDLE',
   stateMachine: initialStateMachine,
-  connectionState: 'STANDALONE_DEV',
+  connectionState: 'DISCONNECTED',
   currentCommand: null,
   activeTask: null,
   contextualMessage: null,
   telemetry: {
-    cpuUsagePct: 18,
-    memoryUsagePct: 42,
-    memoryUsedGb: 6.7,
+    cpuUsagePct: 0,
+    memoryUsagePct: 0,
+    memoryUsedGb: 0,
     memoryTotalGb: 16.0,
-    gpuUsagePct: 14,
-    gpuVramUsedGb: 1.8,
-    networkLatencyMs: 12,
-    isSimulatedDevData: true,
+    gpuUsagePct: 0,
+    gpuVramUsedGb: 0,
+    networkLatencyMs: 4,
+    isSimulatedDevData: false,
     timestamp: Date.now(),
   },
   audioState: {
@@ -89,96 +90,27 @@ export const solStore = {
     emitChange();
   },
 
+  setContextualMessage: (contextualMessage: ContextualMessage | null) => {
+    storeState = { ...storeState, contextualMessage };
+    emitChange();
+  },
+
+  setActiveTask: (activeTask: TaskProgress | null) => {
+    storeState = { ...storeState, activeTask };
+    emitChange();
+  },
+
+  updateTelemetry: (telemetry: TelemetrySnapshot) => {
+    storeState = { ...storeState, telemetry };
+    emitChange();
+  },
+
   submitCommand: (text: string) => {
     const trimmed = text.trim();
     if (!trimmed) return;
 
-    const command: SolCommand = {
-      id: `cmd-${Date.now()}`,
-      rawText: trimmed,
-      timestamp: Date.now(),
-      status: 'submitted',
-    };
-
-    storeState = {
-      ...storeState,
-      currentCommand: command,
-    };
-    emitChange();
-
-    // Trigger state change reflecting command intake
-    storeState.stateMachine.transition('UNDERSTANDING', true, `Received command: "${trimmed}"`);
-
-    // In standalone development mode, show contextual acknowledgement and simulate a clean task preview
-    storeState = {
-      ...storeState,
-      contextualMessage: {
-        id: `msg-${Date.now()}`,
-        sender: 'sol',
-        content: `Acknowledged: "${trimmed}". Processing through runtime pipeline...`,
-        timestamp: Date.now(),
-      },
-      activeTask: {
-        id: `task-${Date.now()}`,
-        title: trimmed,
-        agentName: 'SYSTEM PIPELINE',
-        currentStepIndex: 0,
-        status: 'active',
-        startedAt: Date.now(),
-        steps: [
-          { id: '1', label: 'Parsing operational command', status: 'in_progress' },
-          { id: '2', label: 'Checking backend daemon availability', status: 'pending' },
-          { id: '3', label: 'Dispatching execution payload', status: 'pending' },
-        ],
-      },
-    };
-    emitChange();
-
-    // Simulate progressive execution steps in development mode
-    setTimeout(() => {
-      storeState.stateMachine.transition('EXECUTING', true, 'Simulating task progress');
-      if (storeState.activeTask) {
-        storeState = {
-          ...storeState,
-          activeTask: {
-            ...storeState.activeTask,
-            currentStepIndex: 1,
-            steps: [
-              { id: '1', label: 'Parsing operational command', status: 'completed' },
-              { id: '2', label: 'Checking backend daemon availability', status: 'in_progress' },
-              { id: '3', label: 'Dispatching execution payload', status: 'pending' },
-            ],
-          },
-        };
-        emitChange();
-      }
-    }, 1200);
-
-    setTimeout(() => {
-      storeState.stateMachine.transition('SUCCESS', true, 'Task completed');
-      if (storeState.activeTask) {
-        storeState = {
-          ...storeState,
-          activeTask: {
-            ...storeState.activeTask,
-            currentStepIndex: 2,
-            status: 'completed',
-            completedAt: Date.now(),
-            steps: [
-              { id: '1', label: 'Parsing operational command', status: 'completed' },
-              { id: '2', label: 'Checking backend daemon availability', status: 'completed' },
-              { id: '3', label: 'Standalone development pipeline ready', status: 'completed' },
-            ],
-          },
-        };
-        emitChange();
-      }
-    }, 2800);
-
-    // Return to IDLE after success
-    setTimeout(() => {
-      storeState.stateMachine.transition('IDLE', true, 'Reset to idle state');
-    }, 4500);
+    // Dispatch command through real CommandRuntime pipeline (no fake timers!)
+    commandRuntime.dispatchCommand(trimmed, 'text');
   },
 
   clearActiveTask: () => {

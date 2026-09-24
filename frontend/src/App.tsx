@@ -11,6 +11,7 @@ import { ContextualMessage } from './components/ContextualMessage';
 import { StateSelectorDebug } from './components/StateSelectorDebug';
 import { SolCoreCanvas } from './core/SolCoreCanvas';
 import { telemetryService } from './services/telemetryService';
+import { runtimeConnection } from './runtime/RuntimeConnection';
 import { AlertTriangle, PowerOff } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -24,10 +25,13 @@ export const App: React.FC = () => {
     fpsMetric,
   } = useSolStore();
 
-  // Start telemetry polling service
+  // Connect WebSocket to Python runtime & start telemetry polling service
   useEffect(() => {
+    runtimeConnection.connect();
     telemetryService.startPolling(3000);
-    return () => telemetryService.stopPolling();
+    return () => {
+      telemetryService.stopPolling();
+    };
   }, []);
 
   const handleCommandSubmit = (text: string) => {
