@@ -1,10 +1,13 @@
 import React, { useEffect } from 'react';
 import { useSolStore, solStore } from './state/useSolStore';
 import { HeaderStatus } from './components/HeaderStatus';
+import { NavigationRail } from './components/NavigationRail';
+import { CoreStatusCard } from './components/CoreStatusCard';
+import { RightTelemetryPanel } from './components/RightTelemetryPanel';
 import { CommandBar } from './components/CommandBar';
+import { GesturePill, VoiceAssistantPill } from './components/BottomAuxiliaryCards';
 import { ActiveTaskCard } from './components/ActiveTaskCard';
 import { ContextualMessage } from './components/ContextualMessage';
-import { SystemTelemetryPill } from './components/SystemTelemetryPill';
 import { StateSelectorDebug } from './components/StateSelectorDebug';
 import { SolCoreCanvas } from './core/SolCoreCanvas';
 import { telemetryService } from './services/telemetryService';
@@ -58,7 +61,7 @@ export const App: React.FC = () => {
         flexDirection: 'column',
       }}
     >
-      {/* Background Cosmic Space Atmosphere */}
+      {/* Background Celestial Radial Atmosphere */}
       <div className="sol-environment-bg" />
 
       {/* TOP: Minimal SOL Environment Status */}
@@ -68,7 +71,16 @@ export const App: React.FC = () => {
         fpsMetric={fpsMetric}
       />
 
-      {/* CENTER: Reserved SOL Core Environment & Contextual Layers */}
+      {/* LEFT NAVIGATION RAIL */}
+      <NavigationRail />
+
+      {/* LEFT CONTEXTUAL CORE STATUS HUD */}
+      <CoreStatusCard solState={solState} />
+
+      {/* RIGHT CONTEXTUAL TELEMETRY & AGENTS HUD */}
+      <RightTelemetryPanel telemetry={telemetry} />
+
+      {/* CENTER: Living SOL Core WebGL Environment */}
       <main
         style={{
           position: 'relative',
@@ -90,12 +102,12 @@ export const App: React.FC = () => {
               alignItems: 'center',
               gap: '8px',
               padding: '6px 16px',
-              background: 'rgba(30, 41, 59, 0.7)',
+              background: 'rgba(30, 41, 59, 0.75)',
               border: '1px solid rgba(71, 85, 105, 0.4)',
               borderRadius: '20px',
               fontSize: '0.75rem',
               color: 'var(--sol-state-offline)',
-              zIndex: 20,
+              zIndex: 30,
               backdropFilter: 'blur(8px)',
             }}
             role="status"
@@ -119,7 +131,7 @@ export const App: React.FC = () => {
               borderRadius: '20px',
               fontSize: '0.75rem',
               color: 'var(--sol-state-error)',
-              zIndex: 20,
+              zIndex: 30,
               backdropFilter: 'blur(8px)',
             }}
             role="alert"
@@ -137,23 +149,24 @@ export const App: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            zIndex: 1,
           }}
         >
           <SolCoreCanvas solState={solState} />
         </div>
 
-        {/* Contextual Area (Progressive Disclosure - only appears when active) */}
+        {/* Contextual Area (Progressive Disclosure - appears only when active) */}
         <div
           style={{
             position: 'absolute',
-            bottom: '40px',
+            bottom: '24px',
             width: '100%',
-            maxWidth: '680px',
+            maxWidth: '640px',
             padding: '0 24px',
             display: 'flex',
             flexDirection: 'column',
             gap: '12px',
-            zIndex: 15,
+            zIndex: 35,
             pointerEvents: 'auto',
           }}
         >
@@ -162,45 +175,37 @@ export const App: React.FC = () => {
         </div>
       </main>
 
-      {/* BOTTOM: Integrated Command Interface & System Awareness */}
+      {/* BOTTOM: Integrated Controls matching Layout.png */}
       <footer
         style={{
           position: 'relative',
-          zIndex: 20,
-          padding: '20px 28px 24px',
+          zIndex: 30,
+          padding: '16px 28px 24px',
           display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          background: 'linear-gradient(0deg, rgba(5, 10, 23, 0.9) 0%, transparent 100%)',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '20px',
+          background: 'linear-gradient(0deg, rgba(3, 7, 20, 0.95) 0%, transparent 100%)',
+          pointerEvents: 'none',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-            width: '100%',
-            maxWidth: '1200px',
-            margin: '0 auto',
-          }}
-        >
-          {/* Invisible spacer on left for desktop symmetry */}
-          <div style={{ width: '180px', display: 'none' }} className="desktop-spacer" />
+        {/* Left: Hand Gesture Pill */}
+        <div style={{ pointerEvents: 'auto' }}>
+          <GesturePill />
+        </div>
 
-          {/* Integrated Command Input */}
-          <div style={{ flex: 1 }}>
-            <CommandBar
-              onSubmit={handleCommandSubmit}
-              isListening={audioState.isListening}
-              onToggleMic={handleToggleMic}
-            />
-          </div>
+        {/* Center: Command Input Bar */}
+        <div style={{ flex: 1, maxWidth: '640px', pointerEvents: 'auto' }}>
+          <CommandBar
+            onSubmit={handleCommandSubmit}
+            isListening={audioState.isListening}
+            onToggleMic={handleToggleMic}
+          />
+        </div>
 
-          {/* Restrained System Awareness Telemetry */}
-          <div style={{ minWidth: '180px', display: 'flex', justifyContent: 'flex-end' }}>
-            <SystemTelemetryPill telemetry={telemetry} />
-          </div>
+        {/* Right: Voice Assistant Pill */}
+        <div style={{ pointerEvents: 'auto' }}>
+          <VoiceAssistantPill solState={solState} isListening={audioState.isListening} />
         </div>
       </footer>
 

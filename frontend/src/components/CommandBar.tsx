@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Terminal, Mic, ArrowUpRight } from 'lucide-react';
+import { Keyboard, Mic, Send } from 'lucide-react';
 
 interface CommandBarProps {
   onSubmit: (commandText: string) => void;
@@ -45,9 +45,8 @@ export const CommandBar: React.FC<CommandBarProps> = ({
     <div
       style={{
         width: '100%',
-        maxWidth: '720px',
+        maxWidth: '560px',
         margin: '0 auto',
-        padding: '0 20px',
       }}
     >
       <form
@@ -58,19 +57,19 @@ export const CommandBar: React.FC<CommandBarProps> = ({
           alignItems: 'center',
           gap: '12px',
           background: isFocused
-            ? 'rgba(8, 18, 38, 0.92)'
-            : 'rgba(5, 11, 25, 0.75)',
+            ? 'rgba(6, 18, 44, 0.88)'
+            : 'rgba(5, 12, 28, 0.72)',
           border: isFocused
             ? '1px solid var(--sol-energy-primary)'
-            : '1px solid var(--sol-surface-border)',
-          borderRadius: '14px',
-          padding: '10px 16px',
-          boxShadow: isFocused ? 'var(--sol-glow-subtle)' : 'none',
+            : '1px solid rgba(56, 189, 248, 0.25)',
+          borderRadius: '32px',
+          padding: '8px 14px 8px 18px',
+          boxShadow: isFocused ? 'var(--sol-glow-active)' : '0 8px 32px rgba(0, 0, 0, 0.5)',
           transition: 'all var(--sol-transition-normal)',
-          backdropFilter: 'blur(16px)',
+          backdropFilter: 'blur(20px)',
         }}
       >
-        {/* Terminal glyph */}
+        {/* Keyboard glyph as seen in Layout.png */}
         <div
           style={{
             display: 'flex',
@@ -80,7 +79,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
           }}
           aria-hidden="true"
         >
-          <Terminal size={18} />
+          <Keyboard size={18} />
         </div>
 
         {/* Operational Command Input */}
@@ -92,8 +91,8 @@ export const CommandBar: React.FC<CommandBarProps> = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           disabled={disabled}
-          placeholder="Direct instruction or query... (Press / to focus)"
-          aria-label="Direct operational command"
+          placeholder="Ask SOL anything..."
+          aria-label="Ask SOL anything"
           style={{
             flex: 1,
             fontSize: '0.9375rem',
@@ -103,30 +102,34 @@ export const CommandBar: React.FC<CommandBarProps> = ({
           }}
         />
 
-        {/* Microphone Voice Trigger Placeholder */}
+        {/* Microphone Voice Trigger (Circular glowing button matching Layout.png) */}
         <button
           type="button"
           onClick={onToggleMic}
-          aria-label={isListening ? 'Deactivate voice stream' : 'Activate voice stream'}
-          title={isListening ? 'Deactivate voice stream' : 'Activate voice stream (Mic placeholder)'}
+          aria-label={isListening ? 'Deactivate microphone' : 'Activate live microphone stream'}
+          title={isListening ? 'Microphone Active — Click to Stop' : 'Activate Live Microphone (Web Audio API)'}
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '32px',
-            height: '32px',
-            borderRadius: '8px',
-            background: isListening ? 'var(--sol-energy-muted)' : 'rgba(255, 255, 255, 0.04)',
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            background: isListening
+              ? 'var(--sol-energy-primary)'
+              : 'rgba(0, 212, 255, 0.12)',
             border: isListening
-              ? '1px solid var(--sol-energy-primary)'
-              : '1px solid var(--sol-surface-border-subtle)',
-            color: isListening ? 'var(--sol-energy-primary)' : 'var(--sol-text-secondary)',
+              ? '1px solid #ffffff'
+              : '1px solid rgba(0, 212, 255, 0.3)',
+            color: isListening ? '#02040a' : 'var(--sol-energy-primary)',
+            boxShadow: isListening ? '0 0 16px var(--sol-energy-primary)' : 'none',
+            transition: 'all var(--sol-transition-fast)',
           }}
         >
-          <Mic size={16} />
+          <Mic size={17} />
         </button>
 
-        {/* Submit Execution Action */}
+        {/* Submit Execution Action (Arrow icon matching Layout.png) */}
         <button
           type="submit"
           disabled={!inputVal.trim() || disabled}
@@ -136,17 +139,17 @@ export const CommandBar: React.FC<CommandBarProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '32px',
-            height: '32px',
-            borderRadius: '8px',
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
             background: inputVal.trim()
-              ? 'var(--sol-energy-secondary)'
-              : 'rgba(255, 255, 255, 0.04)',
-            color: inputVal.trim() ? '#ffffff' : 'var(--sol-text-muted)',
+              ? 'rgba(0, 212, 255, 0.25)'
+              : 'transparent',
+            color: inputVal.trim() ? 'var(--sol-energy-primary)' : 'var(--sol-text-muted)',
             transition: 'all var(--sol-transition-fast)',
           }}
         >
-          <ArrowUpRight size={16} />
+          <Send size={15} />
         </button>
       </form>
     </div>

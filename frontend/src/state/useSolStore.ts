@@ -9,6 +9,7 @@ import {
   TaskProgress,
   TelemetrySnapshot,
 } from './types';
+import { audioReactiveService } from '../core/audio/AudioReactiveService';
 
 /* ==========================================================================
    SOL STORE
@@ -190,20 +191,36 @@ export const solStore = {
     emitChange();
   },
 
-  toggleAudioListening: () => {
+  toggleAudioListening: async () => {
     const nextListening = !storeState.audioState.isListening;
-    storeState = {
-      ...storeState,
-      audioState: {
-        ...storeState.audioState,
-        isListening: nextListening,
-      },
-    };
-    emitChange();
 
     if (nextListening) {
       storeState.stateMachine.transition('LISTENING', true, 'Voice activation requested');
+      const granted = await audioReactiveService.startListening();
+      storeState = {
+        ...storeState,
+        audioState: {
+          ...storeState.audioState,
+          isListening: granted,
+          hasPermission: granted,
+          error: audioReactiveService.errorMessage ?? undefined,
+        },
+      };
+      emitChange();
+      if (!granted) {
+        // Fall back gracefully to IDLE if microphone permission was not granted
+        storeState.stateMachine.transition('IDLE', true, 'Microphone unavailable');
+      }
     } else {
+      audioReactiveService.stopListening();
+      storeState = {
+        ...storeState,
+        audioState: {
+          ...storeState.audioState,
+          isListening: false,
+        },
+      };
+      emitChange();
       storeState.stateMachine.transition('IDLE', true, 'Voice input stopped');
     }
   },
