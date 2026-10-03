@@ -14,6 +14,7 @@ from app.capabilities.parser import intent_parser
 from app.capabilities.resolver import app_resolver
 from app.capabilities.safety import validate_execution_safety, is_protected_process
 from app.capabilities.windows_processes import process_controller
+from app.capabilities.verifier import launch_and_verify_application, close_and_verify_application
 from app.capabilities.power import power_manager
 
 
@@ -118,35 +119,19 @@ class CapabilityPipeline:
                 capability="open_application",
             )
 
-        # SAFE WINDOWS PROCESS LAUNCHING (NO shell=True, NO cmd.exe /c!)
-        try:
-            if target_path.lower().endswith(".lnk") or target_path.lower().endswith(".url"):
-                os.startfile(target_path)
-            else:
-                subprocess.Popen([target_path], shell=False)
+        # REAL WINDOWS PROCESS LAUNCH & BOUNDED PROCESS VERIFICATION
+        success, message, data = launch_and_verify_application(resolved_app, timeout=3.0)
 
-            return CapabilityResult(
-                status="completed",
-                message=f"Opened '{resolved_app.name}'.",
-                data={
-                    "appName": resolved_app.name,
-                    "targetPath": target_path,
-                    "executable": resolved_app.executable_name,
-                    "source": resolved_app.source,
-                },
-                capability="open_application",
-            )
-        except Exception as err:
-            return CapabilityResult(
-                status="failed",
-                message=f"Failed to launch '{resolved_app.name}': {err}",
-                data={"target": target, "error": str(err)},
-                capability="open_application",
-            )
+        return CapabilityResult(
+            status="completed" if success else "failed",
+            message=message,
+            data=data,
+            capability="open_application",
+        )
 
     def _execute_close_app(self, intent: ParsedIntent) -> CapabilityResult:
         target = intent.target_name or ""
-        status, message, data = process_controller.close_application(target)
+        status, message, data = close_and_verify_application(target, timeout=2.5)
         return CapabilityResult(
             status=status,
             message=message,

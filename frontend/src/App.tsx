@@ -79,7 +79,6 @@ export const App: React.FC = () => {
       {/* TOP: Minimal SOL Environment Status */}
       <HeaderStatus
         connectionState={connectionState}
-        audioState={audioState}
         fpsMetric={fpsMetric}
       />
 

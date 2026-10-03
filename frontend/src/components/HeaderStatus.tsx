@@ -1,21 +1,19 @@
 import React from 'react';
 import { Mic, MicOff, ShieldCheck, Activity, Volume2, VolumeX } from 'lucide-react';
-import { RuntimeConnectionState, AudioInputState } from '../state/types';
+import { RuntimeConnectionState } from '../state/types';
 import { useSolStore, solStore } from '../state/useSolStore';
 import { voiceEngine } from '../voice/VoiceEngine';
 
 interface HeaderStatusProps {
   connectionState: RuntimeConnectionState;
-  audioState: AudioInputState;
   fpsMetric: number;
 }
 
 export const HeaderStatus: React.FC<HeaderStatusProps> = ({
   connectionState,
-  audioState,
   fpsMetric,
 }) => {
-  const { voiceSettings } = useSolStore();
+  const { voiceSettings, voiceLifecycleState } = useSolStore();
 
   const handleToggleVoiceOutput = () => {
     const nextState = !voiceSettings.enabled;
@@ -24,6 +22,38 @@ export const HeaderStatus: React.FC<HeaderStatusProps> = ({
       voiceEngine.stopSpeaking();
     }
   };
+
+  const handleToggleMic = () => {
+    solStore.toggleAudioListening();
+  };
+
+  const getVoiceStatusLabel = () => {
+    switch (voiceLifecycleState) {
+      case 'PASSIVE_LISTENING':
+        return 'LISTENING FOR SOL';
+      case 'ACTIVATED':
+        return 'SOL ACTIVATED';
+      case 'LISTENING_FOR_COMMAND':
+        return 'LISTENING FOR COMMAND';
+      case 'UNDERSTANDING':
+        return 'UNDERSTANDING';
+      case 'PROCESSING':
+        return 'PROCESSING';
+      case 'SPEAKING':
+        return 'SOL SPEAKING';
+      case 'INITIALIZING':
+        return 'MIC INITIALIZING';
+      case 'RECOVERING':
+        return 'MIC RECOVERING';
+      case 'MIC_ERROR':
+        return 'MIC ERROR';
+      case 'MIC_OFF':
+      default:
+        return 'MIC STANDBY';
+    }
+  };
+
+  const isMicActive = voiceLifecycleState !== 'MIC_OFF' && voiceLifecycleState !== 'MIC_ERROR';
   return (
     <header
       style={{
@@ -100,22 +130,29 @@ export const HeaderStatus: React.FC<HeaderStatusProps> = ({
           <span className="font-mono text-xs">ENCLAVE // SECURE</span>
         </div>
 
-        {/* Audio state badge */}
-        <div
+        {/* Audio state badge with Click-to-Toggle and Real Lifecycle Label */}
+        <button
+          onClick={handleToggleMic}
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
+            padding: '3px 10px',
+            borderRadius: '12px',
+            background: isMicActive ? 'rgba(0, 212, 255, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+            border: isMicActive ? '1px solid rgba(0, 212, 255, 0.35)' : '1px solid var(--sol-surface-border-subtle)',
+            color: isMicActive ? 'var(--sol-energy-primary)' : 'var(--sol-text-muted)',
+            cursor: 'pointer',
             fontSize: '0.75rem',
-            color: audioState.isListening ? 'var(--sol-energy-primary)' : 'var(--sol-text-muted)',
+            transition: 'all var(--sol-transition-fast)',
           }}
-          title={audioState.isListening ? 'Microphone Active' : 'Microphone Inactive'}
+          title={isMicActive ? 'Microphone Active (Click to Standby)' : 'Microphone in Standby (Click to Listen)'}
         >
-          {audioState.isListening ? <Mic size={14} /> : <MicOff size={14} />}
+          {isMicActive ? <Mic size={14} /> : <MicOff size={14} />}
           <span className="font-mono text-xs">
-            {audioState.isListening ? 'MIC ACTIVE' : 'MIC STANDBY'}
+            {getVoiceStatusLabel()}
           </span>
-        </div>
+        </button>
 
         {/* Voice Output Quick Toggle */}
         <button

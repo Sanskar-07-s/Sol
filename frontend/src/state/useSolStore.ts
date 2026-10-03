@@ -11,12 +11,15 @@ import {
 } from './types';
 import { audioReactiveService } from '../core/audio/AudioReactiveService';
 import { commandRuntime } from '../runtime/CommandRuntime';
+import { voiceEngine } from '../voice/VoiceEngine';
 
 /* ==========================================================================
    SOL STORE
    Lightweight, framework-native reactive store built with useSyncExternalStore.
    Zero external state management libraries needed.
    ========================================================================== */
+
+import { VoiceLifecycleState } from '../voice/voiceTypes';
 
 export interface VoiceSettings {
   enabled: boolean;
@@ -40,6 +43,7 @@ interface SolStoreState {
   fpsMetric: number;
   activeView: ActiveView;
   voiceSettings: VoiceSettings;
+  voiceLifecycleState: VoiceLifecycleState;
 }
 
 const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
@@ -98,6 +102,7 @@ let storeState: SolStoreState = {
   fpsMetric: 60,
   activeView: 'sol',
   voiceSettings: loadVoiceSettings(),
+  voiceLifecycleState: 'MIC_OFF',
 };
 
 const listeners = new Set<() => void>();
@@ -125,6 +130,11 @@ export const solStore = {
 
   setSolState: (state: SolState, force = false, reason?: string): boolean => {
     return storeState.stateMachine.transition(state, force, reason);
+  },
+
+  setVoiceLifecycleState: (voiceLifecycleState: VoiceLifecycleState) => {
+    storeState = { ...storeState, voiceLifecycleState };
+    emitChange();
   },
 
   setConnectionState: (connectionState: RuntimeConnectionState) => {
@@ -171,6 +181,11 @@ export const solStore = {
     if (nextListening) {
       storeState.stateMachine.transition('LISTENING', true, 'Voice activation requested');
       const granted = await audioReactiveService.startListening();
+      if (granted) {
+        // Start persistent background speech recognition
+        await voiceEngine.startListening();
+      }
+
       storeState = {
         ...storeState,
         audioState: {
@@ -186,6 +201,7 @@ export const solStore = {
         storeState.stateMachine.transition('IDLE', true, 'Microphone unavailable');
       }
     } else {
+      voiceEngine.stopListening();
       audioReactiveService.stopListening();
       storeState = {
         ...storeState,
@@ -193,6 +209,7 @@ export const solStore = {
           ...storeState.audioState,
           isListening: false,
         },
+        voiceLifecycleState: 'MIC_OFF',
       };
       emitChange();
       storeState.stateMachine.transition('IDLE', true, 'Voice input stopped');

@@ -45,6 +45,11 @@ interface IWebSpeechRecognitionConstructor {
 export class SpeechRecognitionService implements ISpeechRecognitionProvider {
   private _recognition: IWebSpeechRecognitionInstance | null = null;
   private _isListening = false;
+  private _shouldKeepListening = false;
+  private _isMutedForTTS = false;
+  private _sessionGeneration = 0;
+  private _restartTimer: ReturnType<typeof setTimeout> | null = null;
+
   private _transcript = '';
   private _interimTranscript = '';
   private _confidence = 0;
@@ -76,6 +81,11 @@ export class SpeechRecognitionService implements ISpeechRecognitionProvider {
         this._recognition.lang = 'en-US';
 
         this._recognition.onresult = (e: IWebSpeechRecognitionEvent) => {
+          // If SOL is actively speaking TTS, ignore mic recognition so SOL doesn't hear itself
+          if (this._isMutedForTTS) {
+            return;
+          }
+
           let finalStr = '';
           let interimStr = '';
           let maxConf = 0;
@@ -109,21 +119,49 @@ export class SpeechRecognitionService implements ISpeechRecognitionProvider {
           this._resultCallbacks.forEach((cb) => {
             try { cb(payload); } catch (err) { console.error('[SpeechRecognition] Callback error:', err); }
           });
+
+          // Reset final accumulator once passed
+          if (finalStr) {
+            this._transcript = '';
+          }
         };
 
         this._recognition.onerror = (e: IWebSpeechRecognitionErrorEvent) => {
-          this._lastError = e.error || 'Speech recognition error';
-          this._isListening = false;
+          const err = e.error || 'Speech recognition error';
+
+          // Normal passive events: no-speech and aborted are expected when user is quiet
+          if (err === 'no-speech' || err === 'aborted') {
+            return;
+          }
+
+          console.warn('[SpeechRecognition] Provider error:', err);
+
+          if (err === 'not-allowed' || err === 'permission-denied') {
+            this._shouldKeepListening = false;
+            this._lastError = 'Microphone permission is required for voice activation.';
+            this._errorCallbacks.forEach((cb) => {
+              try { cb(this._lastError!); } catch (cErr) { console.error('[SpeechRecognition] Error callback error:', cErr); }
+            });
+            return;
+          }
+
+          this._lastError = err;
           this._errorCallbacks.forEach((cb) => {
-            try { cb(this._lastError!); } catch (err) { console.error('[SpeechRecognition] Error callback error:', err); }
+            try { cb(this._lastError!); } catch (cErr) { console.error('[SpeechRecognition] Error callback error:', cErr); }
           });
         };
 
         this._recognition.onend = () => {
           this._isListening = false;
+
           this._endCallbacks.forEach((cb) => {
             try { cb(); } catch (err) { console.error('[SpeechRecognition] End callback error:', err); }
           });
+
+          // Controlled persistent restart loop for passive listening
+          if (this._shouldKeepListening && !this._isMutedForTTS) {
+            this._scheduleRestart();
+          }
         };
       } catch (err) {
         console.warn('[SpeechRecognition] Provider initialization error:', err);
@@ -132,8 +170,35 @@ export class SpeechRecognitionService implements ISpeechRecognitionProvider {
     }
   }
 
+  private _scheduleRestart(): void {
+    if (this._restartTimer) {
+      clearTimeout(this._restartTimer);
+    }
+
+    const currentGen = ++this._sessionGeneration;
+
+    this._restartTimer = setTimeout(() => {
+      this._restartTimer = null;
+      if (this._shouldKeepListening && !this._isListening && currentGen === this._sessionGeneration) {
+        this.start().catch((err) => {
+          console.warn('[SpeechRecognition] Auto-restart attempt error:', err);
+        });
+      }
+    }, 250);
+  }
+
   public isSupported(): boolean {
     return this._recognition !== null;
+  }
+
+  public setMutedForTTS(muted: boolean): void {
+    this._isMutedForTTS = muted;
+    if (muted) {
+      this._transcript = '';
+      this._interimTranscript = '';
+    } else if (this._shouldKeepListening && !this._isListening) {
+      this._scheduleRestart();
+    }
   }
 
   public start(): Promise<boolean> {
@@ -147,6 +212,8 @@ export class SpeechRecognitionService implements ISpeechRecognitionProvider {
       return Promise.resolve(true);
     }
 
+    this._shouldKeepListening = true;
+
     return new Promise((resolve) => {
       try {
         this._transcript = '';
@@ -159,7 +226,14 @@ export class SpeechRecognitionService implements ISpeechRecognitionProvider {
         resolve(true);
       } catch (err) {
         this._isListening = false;
-        this._lastError = err instanceof Error ? err.message : 'Speech recognition start failure';
+        const msg = err instanceof Error ? err.message : 'Speech recognition start failure';
+        // If already started, mark listening true
+        if (msg.toLowerCase().includes('already started')) {
+          this._isListening = true;
+          resolve(true);
+          return;
+        }
+        this._lastError = msg;
         this._errorCallbacks.forEach((cb) => cb(this._lastError!));
         resolve(false);
       }
@@ -167,6 +241,12 @@ export class SpeechRecognitionService implements ISpeechRecognitionProvider {
   }
 
   public stop(): void {
+    this._shouldKeepListening = false;
+    if (this._restartTimer) {
+      clearTimeout(this._restartTimer);
+      this._restartTimer = null;
+    }
+
     if (this._recognition && this._isListening) {
       try {
         this._recognition.stop();

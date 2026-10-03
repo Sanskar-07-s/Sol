@@ -11,6 +11,18 @@ export type MicPermissionState =
   | 'AVAILABLE'
   | 'LISTENING';
 
+export type VoiceLifecycleState =
+  | 'MIC_OFF'
+  | 'INITIALIZING'
+  | 'PASSIVE_LISTENING'
+  | 'ACTIVATED'
+  | 'LISTENING_FOR_COMMAND'
+  | 'UNDERSTANDING'
+  | 'PROCESSING'
+  | 'SPEAKING'
+  | 'RECOVERING'
+  | 'MIC_ERROR';
+
 export type VoiceActivationMode = 'PUSH_TO_TALK' | 'VOICE_ACTIVATION';
 
 export interface SpeechRecognitionResultPayload {
