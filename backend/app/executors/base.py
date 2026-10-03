@@ -71,38 +71,17 @@ class TestNotificationExecutor(BaseExecutor):
         )
 
 
+from app.capabilities.executor import capability_pipeline
+
+
 class ExecutorRegistry:
-    def __init__(self):
-        self._executors: Dict[str, BaseExecutor] = {
-            "system status": SystemStatusExecutor(),
-            "what is my cpu usage": SystemStatusExecutor(),
-            "cpu usage": SystemStatusExecutor(),
-            "runtime status": RuntimeStatusExecutor(),
-            "what is the runtime status": RuntimeStatusExecutor(),
-            "test notification": TestNotificationExecutor(),
-            "echo hello": EchoExecutor(),
-        }
-
     def dispatch(self, raw_text: str) -> Tuple[str, str, Dict[str, Any]]:
-        clean = raw_text.strip().lower()
-
-        # Direct exact or prefix matching
-        if clean in self._executors:
-            return self._executors[clean].execute(raw_text)
-
-        if clean.startswith("echo"):
-            return EchoExecutor().execute(raw_text)
-
-        for key, executor in self._executors.items():
-            if key in clean:
-                return executor.execute(raw_text)
-
-        # Unregistered / unsupported capability fallback
-        return (
-            "unsupported",
-            f"Capability for '{raw_text}' is not registered in current SOL runtime environment.",
-            {"rawCommand": raw_text, "supported": list(self._executors.keys())}
-        )
+        result = capability_pipeline.execute_command(raw_text)
+        payload = result.data or {}
+        if result.requires_confirmation:
+            payload["requires_confirmation"] = True
+            payload["confirmation_id"] = result.confirmation_id
+        return (result.status, result.message, payload)
 
 
 executor_registry = ExecutorRegistry()

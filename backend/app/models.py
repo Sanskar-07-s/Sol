@@ -39,7 +39,7 @@ class CommandProgressFrame(BaseModel):
 class CommandResultFrame(BaseModel):
     type: Literal["COMMAND_RESULT"] = "COMMAND_RESULT"
     commandId: str
-    status: Literal["completed", "unsupported", "failed"]
+    status: Literal["completed", "unsupported", "failed", "warning"]
     message: str
     data: Optional[Dict[str, Any]] = None
     timestamp: float

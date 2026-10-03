@@ -223,6 +223,31 @@ export class CommandRuntime {
       // Speak response via TTS
       voiceEngine.speak(message);
 
+    } else if (status === 'warning') {
+      solStore.setSolState('WARNING', true, 'Confirmation required for action');
+
+      solStore.setContextualMessage({
+        id: `msg-${Date.now()}`,
+        sender: 'sol',
+        content: message,
+        timestamp: Date.now(),
+      });
+
+      const active = solStore.getState().activeTask;
+      if (active && active.id === commandId) {
+        solStore.setActiveTask({
+          ...active,
+          status: 'active',
+          steps: [
+            { id: '1', label: 'Connecting to SOL Python Runtime', status: 'completed' },
+            { id: '2', label: 'Power action registered', status: 'completed' },
+            { id: '3', label: 'Awaiting user confirmation', status: 'in_progress' },
+          ],
+        });
+      }
+
+      voiceEngine.speak(message);
+
     } else if (status === 'unsupported') {
       solStore.setSolState('WARNING', true, 'Command capability unsupported');
 
