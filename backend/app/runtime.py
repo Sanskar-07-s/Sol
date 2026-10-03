@@ -4,7 +4,7 @@ Uses psutil to measure actual host CPU, RAM, and uptime.
 """
 import time
 import psutil
-from backend.app.models import TelemetryFrame
+from app.models import TelemetryFrame
 
 
 class RuntimeHostMonitor:

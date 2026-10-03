@@ -32,8 +32,10 @@ export class CommandRuntime {
 
     // 3. Bind VoiceEngine recognized commands to central command pipeline
     voiceEngine.onCommandRecognized((result) => {
-      if (result.extractedCommand) {
+      if (result.extractedCommand && result.extractedCommand.trim().length > 0) {
         this.dispatchCommand(result.extractedCommand, 'voice');
+      } else {
+        console.log('[CommandRuntime] Wake word detected without command payload. SOL activated in LISTENING state.');
       }
     });
   }

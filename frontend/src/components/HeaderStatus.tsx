@@ -1,6 +1,8 @@
 import React from 'react';
-import { Mic, MicOff, ShieldCheck, Activity } from 'lucide-react';
+import { Mic, MicOff, ShieldCheck, Activity, Volume2, VolumeX } from 'lucide-react';
 import { RuntimeConnectionState, AudioInputState } from '../state/types';
+import { useSolStore, solStore } from '../state/useSolStore';
+import { voiceEngine } from '../voice/VoiceEngine';
 
 interface HeaderStatusProps {
   connectionState: RuntimeConnectionState;
@@ -13,6 +15,15 @@ export const HeaderStatus: React.FC<HeaderStatusProps> = ({
   audioState,
   fpsMetric,
 }) => {
+  const { voiceSettings } = useSolStore();
+
+  const handleToggleVoiceOutput = () => {
+    const nextState = !voiceSettings.enabled;
+    solStore.setVoiceOutputEnabled(nextState);
+    if (!nextState) {
+      voiceEngine.stopSpeaking();
+    }
+  };
   return (
     <header
       style={{
@@ -105,6 +116,30 @@ export const HeaderStatus: React.FC<HeaderStatusProps> = ({
             {audioState.isListening ? 'MIC ACTIVE' : 'MIC STANDBY'}
           </span>
         </div>
+
+        {/* Voice Output Quick Toggle */}
+        <button
+          onClick={handleToggleVoiceOutput}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '3px 10px',
+            borderRadius: '12px',
+            background: voiceSettings.enabled ? 'rgba(0, 212, 255, 0.1)' : 'rgba(255, 255, 255, 0.03)',
+            border: voiceSettings.enabled ? '1px solid rgba(0, 212, 255, 0.3)' : '1px solid var(--sol-surface-border-subtle)',
+            color: voiceSettings.enabled ? 'var(--sol-energy-primary)' : 'var(--sol-text-muted)',
+            cursor: 'pointer',
+            fontSize: '0.75rem',
+            transition: 'all var(--sol-transition-fast)',
+          }}
+          title={voiceSettings.enabled ? 'Voice Output ON (Click to Mute)' : 'Voice Output OFF (Click to Unmute)'}
+        >
+          {voiceSettings.enabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+          <span className="font-mono text-xs">
+            VOICE {voiceSettings.enabled ? 'ON' : 'OFF'}
+          </span>
+        </button>
 
         {/* Runtime Connection status */}
         <div

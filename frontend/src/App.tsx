@@ -10,6 +10,13 @@ import { ActiveTaskCard } from './components/ActiveTaskCard';
 import { ContextualMessage } from './components/ContextualMessage';
 import { StateSelectorDebug } from './components/StateSelectorDebug';
 import { SolCoreCanvas } from './core/SolCoreCanvas';
+import { ChatView } from './components/views/ChatView';
+import { TaskView } from './components/views/TaskView';
+import { AgentView } from './components/views/AgentView';
+import { FilesView } from './components/views/FilesView';
+import { DevicesView } from './components/views/DevicesView';
+import { MemoryView } from './components/views/MemoryView';
+import { SettingsView } from './components/views/SettingsView';
 import { telemetryService } from './services/telemetryService';
 import { runtimeConnection } from './runtime/RuntimeConnection';
 import { AlertTriangle, PowerOff } from 'lucide-react';
@@ -23,6 +30,7 @@ export const App: React.FC = () => {
     telemetry,
     audioState,
     fpsMetric,
+    activeView,
   } = useSolStore();
 
   // Connect WebSocket to Python runtime & start telemetry polling service
@@ -78,13 +86,13 @@ export const App: React.FC = () => {
       {/* LEFT NAVIGATION RAIL */}
       <NavigationRail />
 
-      {/* LEFT CONTEXTUAL CORE STATUS HUD */}
-      <CoreStatusCard solState={solState} />
+      {/* LEFT CONTEXTUAL CORE STATUS HUD (Visible in SOL primary view) */}
+      {activeView === 'sol' && <CoreStatusCard solState={solState} />}
 
-      {/* RIGHT CONTEXTUAL TELEMETRY & AGENTS HUD */}
-      <RightTelemetryPanel telemetry={telemetry} />
+      {/* RIGHT CONTEXTUAL TELEMETRY & AGENTS HUD (Visible in SOL primary view) */}
+      {activeView === 'sol' && <RightTelemetryPanel telemetry={telemetry} />}
 
-      {/* CENTER: Living SOL Core WebGL Environment */}
+      {/* CENTER: Living SOL Core WebGL Environment & Active Workspace Views */}
       <main
         style={{
           position: 'relative',
@@ -145,7 +153,7 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* The living SOL Core WebGL Canvas Pipeline */}
+        {/* The living SOL Core WebGL Canvas Pipeline (Persistent ambient background canvas) */}
         <div
           style={{
             position: 'absolute',
@@ -154,29 +162,56 @@ export const App: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 1,
+            opacity: activeView === 'sol' ? 1 : 0.25,
+            transition: 'opacity 0.4s ease',
+            pointerEvents: activeView === 'sol' ? 'auto' : 'none',
           }}
         >
           <SolCoreCanvas solState={solState} />
         </div>
 
-        {/* Contextual Area (Progressive Disclosure - appears only when active) */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '24px',
-            width: '100%',
-            maxWidth: '640px',
-            padding: '0 24px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            zIndex: 35,
-            pointerEvents: 'auto',
-          }}
-        >
-          <ContextualMessage message={contextualMessage} onDismiss={handleDismissMessage} />
-          <ActiveTaskCard task={activeTask} onDismiss={handleDismissTask} />
-        </div>
+        {/* Active Workspace View Panel */}
+        {activeView !== 'sol' && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 20,
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {activeView === 'chat' && <ChatView />}
+            {activeView === 'tasks' && <TaskView />}
+            {activeView === 'agents' && <AgentView />}
+            {activeView === 'files' && <FilesView />}
+            {activeView === 'devices' && <DevicesView />}
+            {activeView === 'memory' && <MemoryView />}
+            {activeView === 'settings' && <SettingsView />}
+          </div>
+        )}
+
+        {/* Contextual Area (Progressive Disclosure - appears in main SOL view) */}
+        {activeView === 'sol' && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '24px',
+              width: '100%',
+              maxWidth: '640px',
+              padding: '0 24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              zIndex: 35,
+              pointerEvents: 'auto',
+            }}
+          >
+            <ContextualMessage message={contextualMessage} onDismiss={handleDismissMessage} />
+            <ActiveTaskCard task={activeTask} onDismiss={handleDismissTask} />
+          </div>
+        )}
       </main>
 
       {/* BOTTOM: Integrated Controls matching Layout.png */}

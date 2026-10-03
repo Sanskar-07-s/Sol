@@ -7,7 +7,7 @@ import time
 from typing import Set
 from fastapi import WebSocket, WebSocketDisconnect
 
-from backend.app.models import (
+from app.models import (
     CommandAcceptedFrame,
     CommandErrorFrame,
     CommandProgressFrame,
@@ -15,8 +15,8 @@ from backend.app.models import (
     CommandStepProgress,
     OutboundFrame,
 )
-from backend.app.executors.base import executor_registry
-from backend.app.runtime import host_monitor
+from app.executors.base import executor_registry
+from app.runtime import host_monitor
 
 
 class ConnectionManager:

@@ -11,9 +11,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.app.models import OutboundFrame
-from backend.app.websocket import manager, handle_command_lifecycle
-from backend.app.runtime import host_monitor
+from app.models import OutboundFrame
+from app.websocket import manager, handle_command_lifecycle
+from app.runtime import host_monitor
 
 start_timestamp = time.time()
 telemetry_task = None

@@ -124,12 +124,25 @@ export class VoiceEngine {
   }
 
   public async speak(text: string): Promise<boolean> {
+    const { voiceSettings } = solStore.getState();
+    if (!voiceSettings.enabled) {
+      console.log('[VoiceEngine] Voice output disabled in settings. TTS muted.');
+      return false;
+    }
     if (!speechSynthesisService.isSupported()) {
       console.warn('[VoiceEngine] Speech synthesis unsupported.');
       return false;
     }
 
-    return speechSynthesisService.speak(text);
+    const voices = speechSynthesisService.getVoices();
+    const voice = voices.find((v) => v.voiceURI === voiceSettings.selectedVoiceURI);
+
+    return speechSynthesisService.speak(text, {
+      volume: voiceSettings.volume,
+      rate: voiceSettings.rate,
+      pitch: voiceSettings.pitch,
+      voice: voice || undefined,
+    });
   }
 
   public stopSpeaking(): void {
@@ -161,14 +174,18 @@ export class VoiceEngine {
     const activationResult = activationDetector.detectActivation(textToAnalyze);
 
     if (activationResult.isActivated && payload.isFinal) {
-      solStore.setSolState('THINKING', true, 'Wake-word activation confirmed');
+      if (activationResult.extractedCommand) {
+        solStore.setSolState('THINKING', true, 'Wake-word activation confirmed with command');
+      } else {
+        solStore.setSolState('LISTENING', true, 'Wake-word activation confirmed (Listening for command)');
+      }
 
       // Dispatch to command subscribers
       this._commandCallbacks.forEach((cb) => {
         try { cb(activationResult); } catch (err) { console.error('[VoiceEngine] Command cb error:', err); }
       });
 
-      if (this._activationMode === 'PUSH_TO_TALK') {
+      if (this._activationMode === 'PUSH_TO_TALK' && activationResult.extractedCommand) {
         this.stopListening();
       }
     }

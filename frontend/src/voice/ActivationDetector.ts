@@ -88,10 +88,13 @@ export class ActivationDetector {
       extractedCommand = trimmed.replace(new RegExp(matchedPrefix, 'gi'), '').trim();
     }
 
+    const cleanCommand = extractedCommand.trim();
+    console.log(`[ActivationDetector] Wake-word matched: "${matchedPrefix.trim()}" | Extracted command: "${cleanCommand}"`);
+
     return {
       isActivated: true,
       activationWord: matchedPrefix.trim(),
-      extractedCommand: extractedCommand.trim() || trimmed,
+      extractedCommand: cleanCommand,
       rawTranscript,
     };
   }

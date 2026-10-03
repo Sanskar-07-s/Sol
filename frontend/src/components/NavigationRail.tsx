@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useSolStore, solStore, ActiveView } from '../state/useSolStore';
 import {
   Sparkles,
   MessageSquare,
@@ -11,7 +12,7 @@ import {
 } from 'lucide-react';
 
 interface NavItem {
-  id: string;
+  id: ActiveView;
   label: string;
   icon: React.ReactNode;
 }
@@ -28,7 +29,7 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 export const NavigationRail: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('sol');
+  const { activeView } = useSolStore();
 
   return (
     <nav
@@ -45,11 +46,11 @@ export const NavigationRail: React.FC = () => {
       aria-label="Operating Environment Navigation"
     >
       {NAV_ITEMS.map((item) => {
-        const isActive = item.id === activeTab;
+        const isActive = item.id === activeView;
         return (
           <button
             key={item.id}
-            onClick={() => setActiveTab(item.id)}
+            onClick={() => solStore.setActiveView(item.id)}
             style={{
               display: 'flex',
               alignItems: 'center',

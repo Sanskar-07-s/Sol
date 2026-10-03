@@ -18,6 +18,16 @@ import { commandRuntime } from '../runtime/CommandRuntime';
    Zero external state management libraries needed.
    ========================================================================== */
 
+export interface VoiceSettings {
+  enabled: boolean;
+  volume: number;
+  rate: number;
+  pitch: number;
+  selectedVoiceURI: string;
+}
+
+export type ActiveView = 'sol' | 'chat' | 'tasks' | 'agents' | 'files' | 'devices' | 'memory' | 'settings';
+
 interface SolStoreState {
   solState: SolState;
   stateMachine: SolStateMachine;
@@ -28,6 +38,36 @@ interface SolStoreState {
   telemetry: TelemetrySnapshot;
   audioState: AudioInputState;
   fpsMetric: number;
+  activeView: ActiveView;
+  voiceSettings: VoiceSettings;
+}
+
+const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
+  enabled: true,
+  volume: 1.0,
+  rate: 1.0,
+  pitch: 1.0,
+  selectedVoiceURI: '',
+};
+
+function loadVoiceSettings(): VoiceSettings {
+  try {
+    const saved = localStorage.getItem('sol_voice_settings');
+    if (saved) {
+      return { ...DEFAULT_VOICE_SETTINGS, ...JSON.parse(saved) };
+    }
+  } catch (err) {
+    console.warn('[SolStore] Failed to load voice settings:', err);
+  }
+  return DEFAULT_VOICE_SETTINGS;
+}
+
+function saveVoiceSettings(settings: VoiceSettings): void {
+  try {
+    localStorage.setItem('sol_voice_settings', JSON.stringify(settings));
+  } catch (err) {
+    console.warn('[SolStore] Failed to save voice settings:', err);
+  }
 }
 
 const initialStateMachine = new SolStateMachine('IDLE');
@@ -56,6 +96,8 @@ let storeState: SolStoreState = {
     amplitude: 0,
   },
   fpsMetric: 60,
+  activeView: 'sol',
+  voiceSettings: loadVoiceSettings(),
 };
 
 const listeners = new Set<() => void>();
@@ -155,6 +197,25 @@ export const solStore = {
       emitChange();
       storeState.stateMachine.transition('IDLE', true, 'Voice input stopped');
     }
+  },
+
+  setActiveView: (activeView: ActiveView) => {
+    storeState = { ...storeState, activeView };
+    emitChange();
+  },
+
+  setVoiceOutputEnabled: (enabled: boolean) => {
+    const updated = { ...storeState.voiceSettings, enabled };
+    saveVoiceSettings(updated);
+    storeState = { ...storeState, voiceSettings: updated };
+    emitChange();
+  },
+
+  updateVoiceSettings: (partial: Partial<VoiceSettings>) => {
+    const updated = { ...storeState.voiceSettings, ...partial };
+    saveVoiceSettings(updated);
+    storeState = { ...storeState, voiceSettings: updated };
+    emitChange();
   },
 
   updateFpsMetric: (fps: number) => {
