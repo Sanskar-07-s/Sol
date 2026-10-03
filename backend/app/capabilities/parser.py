@@ -70,6 +70,54 @@ class IntentParser:
                     confidence=0.95,
                 )
 
+        # 2b. DEVICE CAPABILITIES ("What can you do on this device?")
+        cap_patterns = [
+            r"what can you do on this device",
+            r"what can you do",
+            r"what are your capabilities",
+            r"show capabilities",
+            r"device capabilities",
+        ]
+        for cap_pat in cap_patterns:
+            if re.search(cap_pat, lower):
+                return ParsedIntent(
+                    intent_type="DEVICE_CAPABILITIES",
+                    raw_text=raw_text,
+                    clean_text=clean_text,
+                    confidence=0.95,
+                )
+
+        # 2c. INSTALLED APPLICATIONS ("What apps are installed?", "Do I have Spotify?")
+        app_list_patterns = [
+            r"what apps are installed",
+            r"show installed apps",
+            r"which applications can you open",
+            r"list apps",
+            r"list installed apps",
+            r"what apps can you open",
+        ]
+        for alp in app_list_patterns:
+            if re.search(alp, lower):
+                return ParsedIntent(
+                    intent_type="INSTALLED_APPS",
+                    raw_text=raw_text,
+                    clean_text=clean_text,
+                    confidence=0.95,
+                )
+
+        # Query about specific app presence ("Do I have Spotify?", "Is Blender installed?")
+        query_app_match = re.search(r"\b(do i have|is|can you open)\s+([a-z0-9\s]+?)\s*(installed|\?)?$", lower)
+        if query_app_match and any(k in lower for k in ["do i have", "installed"]):
+            target_query = query_app_match.group(2).strip()
+            if target_query and target_query not in ("you", "it"):
+                return ParsedIntent(
+                    intent_type="INSTALLED_APPS",
+                    raw_text=raw_text,
+                    clean_text=clean_text,
+                    target_name=target_query,
+                    confidence=0.9,
+                )
+
         # 3. POWER OPERATIONS
         power_patterns = [
             (r"\b(shut\s*down|shutdown|power\s*off)\b", "shutdown"),

@@ -8,6 +8,8 @@ IntentType = Literal[
     "OPEN_APP",
     "CLOSE_APP",
     "SYSTEM_INFO",
+    "DEVICE_CAPABILITIES",
+    "INSTALLED_APPS",
     "POWER_OP",
     "CONFIRMATION",
     "UNKNOWN"
@@ -29,7 +31,7 @@ class CapabilityResult(BaseModel):
     data: Optional[Dict[str, Any]] = None
     requires_confirmation: bool = False
     confirmation_id: Optional[str] = None
-    agent_name: str = "SOL WINDOWS ENGINE"
+    agent_name: str = "SOL DEVICE ENGINE"
     capability: Optional[str] = None
 
 

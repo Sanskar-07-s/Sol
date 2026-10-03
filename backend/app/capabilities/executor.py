@@ -18,6 +18,9 @@ from app.capabilities.verifier import launch_and_verify_application, close_and_v
 from app.capabilities.power import power_manager
 
 
+from app.device import device_bridge
+
+
 class CapabilityPipeline:
     def execute_command(self, raw_text: str) -> CapabilityResult:
         """
@@ -61,6 +64,24 @@ class CapabilityPipeline:
         elif intent.intent_type == "CLOSE_APP":
             return self._execute_close_app(intent)
 
+        elif intent.intent_type == "DEVICE_CAPABILITIES":
+            summary = device_bridge.get_capabilities_summary()
+            return CapabilityResult(
+                status="completed",
+                message=summary,
+                data={"capabilities": device_bridge.get_capabilities()},
+                capability="device_capabilities",
+            )
+
+        elif intent.intent_type == "INSTALLED_APPS":
+            summary = device_bridge.get_installed_apps_summary(intent.target_name)
+            return CapabilityResult(
+                status="completed",
+                message=summary,
+                data={"totalCount": device_bridge.get_application_catalog().total_count},
+                capability="installed_applications",
+            )
+
         elif intent.intent_type == "SYSTEM_INFO":
             return self._execute_system_info(intent)
 
@@ -99,28 +120,16 @@ class CapabilityPipeline:
                 capability="open_application",
             )
 
-        resolved_app = app_resolver.resolve(target)
-        if not resolved_app:
+        success, message, data = device_bridge.launch_application_by_name(target)
+
+        # Check for ambiguity response
+        if not success and data.get("ambiguous"):
             return CapabilityResult(
-                status="failed",
-                message=f"Application '{target}' could not be resolved on host system.",
-                data={"target": target, "errorCode": "APPLICATION_NOT_FOUND"},
+                status="warning",
+                message=message,
+                data=data,
                 capability="open_application",
             )
-
-        target_path = resolved_app.path
-        is_safe, safety_msg = validate_execution_safety(target_path)
-
-        if not is_safe:
-            return CapabilityResult(
-                status="failed",
-                message=f"Safety Refusal: {safety_msg}",
-                data={"target": target, "path": target_path, "errorCode": "SAFETY_REFUSAL"},
-                capability="open_application",
-            )
-
-        # REAL WINDOWS PROCESS LAUNCH & BOUNDED PROCESS VERIFICATION
-        success, message, data = launch_and_verify_application(resolved_app, timeout=3.0)
 
         return CapabilityResult(
             status="completed" if success else "failed",
@@ -131,7 +140,7 @@ class CapabilityPipeline:
 
     def _execute_close_app(self, intent: ParsedIntent) -> CapabilityResult:
         target = intent.target_name or ""
-        status, message, data = close_and_verify_application(target, timeout=2.5)
+        status, message, data = device_bridge.close_application(target)
         return CapabilityResult(
             status=status,
             message=message,

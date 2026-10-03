@@ -58,6 +58,10 @@ app.add_middleware(
 )
 
 
+from typing import Optional
+from app.device import device_bridge
+
+
 @app.get("/health")
 def health_check():
     return {
@@ -78,6 +82,35 @@ def runtime_status():
         "uptimeSeconds": uptime,
         "activeConnections": len(manager.active_connections),
     }
+
+
+@app.get("/api/device/info")
+def get_device_info():
+    return device_bridge.get_device_info().dict()
+
+
+@app.get("/api/device/capabilities")
+def get_device_capabilities():
+    return {
+        "platform": device_bridge.get_device_info().platform,
+        "capabilities": device_bridge.get_capabilities(),
+        "summary": device_bridge.get_capabilities_summary(),
+    }
+
+
+@app.get("/api/device/applications")
+def get_device_applications(query: Optional[str] = None, refresh: bool = False):
+    catalog = device_bridge.get_application_catalog(force_refresh=refresh)
+    if query:
+        filtered = device_bridge.search_applications(query)
+        return {
+            "total_count": catalog.total_count,
+            "filtered_count": len(filtered),
+            "last_scanned_at": catalog.last_scanned_at,
+            "is_scanning": catalog.is_scanning,
+            "apps": [a.dict() for a in filtered],
+        }
+    return catalog.dict()
 
 
 @app.websocket("/ws/runtime")
