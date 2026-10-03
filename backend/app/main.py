@@ -113,6 +113,55 @@ def get_device_applications(query: Optional[str] = None, refresh: bool = False):
     return catalog.dict()
 
 
+from pydantic import BaseModel
+from app.ai import sol_engine, tool_registry
+
+
+class ChatRequest(BaseModel):
+    query: str
+    session_id: Optional[str] = "default"
+
+
+@app.get("/api/ai/status")
+def get_ai_status():
+    return sol_engine.get_status()
+
+
+@app.get("/api/ai/model")
+def get_ai_model():
+    status = sol_engine.get_status()
+    return {
+        "provider": status.get("provider"),
+        "model": status.get("model"),
+        "healthy": status.get("healthy"),
+        "message": status.get("message"),
+    }
+
+
+@app.get("/api/ai/tools")
+def get_ai_tools():
+    tools = tool_registry.list_tools()
+    return {
+        "count": len(tools),
+        "tools": [
+            {
+                "name": t.name,
+                "description": t.description,
+                "safety_level": t.safety_level,
+                "requires_confirmation": t.requires_confirmation,
+                "input_schema": t.input_schema,
+            }
+            for t in tools
+        ],
+    }
+
+
+@app.post("/api/ai/chat")
+def ai_chat_endpoint(req: ChatRequest):
+    response = sol_engine.process_query(req.query, session_id=req.session_id or "default")
+    return response.dict()
+
+
 @app.websocket("/ws/runtime")
 async def websocket_runtime_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
